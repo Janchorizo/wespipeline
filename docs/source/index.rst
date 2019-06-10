@@ -6,7 +6,7 @@
 Wespipeline : A whole exome secuencing variant calling pipeline
 ===============================================================
 
-.. include:: ../README.rst
+.. include:: ../../README.rst
 
 .. toctree::
    :caption: Using the pipeline

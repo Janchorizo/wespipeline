@@ -13,6 +13,7 @@ class GlobalParams(luigi.Config):
         log_dir (str): Absolute path for the logs of the application.
         base_dir (str): Absolute path to the directory where files are expected
             to appear if not specifyed differently.
+
     """
 
     exp_name = luigi.Parameter(description='(str): Name for the experiment. Useful for defining file names.')
@@ -42,7 +43,7 @@ class LocalFile(luigi.Task):
         return luigi.LocalTarget(self.file)
 
     def run(self):
-        if not path.isfile(self.file):
+        if not os.path.isfile(self.file):
             raise Exception(f'{self.file} could not be found.')
 
 class Wget(ExternalProgramTask):
@@ -118,6 +119,10 @@ class UncompressFile(ExternalProgramTask):
     def program_args(self):
         if os.path.isfile(self.input().path):
             command = 'cp' if self.copy.lower() == 'true' else 'mv'
-            return [command, self.input().path, self.output_file]
+
+            if os.path.abspath(self.input().path) != os.path.abspath(self.output_file):
+                return [command, self.input().path, self.output_file]
+            else:
+                return ['echo', 'Input and output files are the same']
         else:
             raise Exception(f"Can't uncompress {self.input_file}. The file was not found")

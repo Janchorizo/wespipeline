@@ -2,8 +2,30 @@ import luigi
 from luigi.contrib.external_program import ExternalProgramTask
 from os import path
 from wespipeline import utils 
+
+class FastqcQualityCheck(ExternalProgramTask):
+    """Task used for creating a quality report on fastq files.
+
+    The report is created using the Fastqc utility, reulsting on an
+    html report, an a zip folder containing more detailed information
+    about the quality of the reads.
+
+    Parameters:
+        fastq_file (str): Path os the fastq file to be analyzed.
+    """
+
+    fastq_file = luigi.Parameter()
+
+    def output(self):
+        return [
+            luigi.LocalTarget(self.fastq_file.replace('.fastq', '_fastqc.html')),
+            luigi.LocalTarget(self.fastq_file.replace('.fastq', '_fastqc.zip')),
+        ]
+
+    def program_args(self):
+        return ['fastqc', '-f', 'fastq', self.fastq_file]
     
-class SraToolkitFastq(luigi.Task):
+class SraToolkitFastq(ExternalProgramTask):
     """Task used for downloading fastq files from the NVBI archive.
 
     In case of the reads to be paired end, the output will consist
@@ -20,12 +42,13 @@ class SraToolkitFastq(luigi.Task):
     """
 
     accession_number = luigi.Parameter()
+    paired_end = luigi.Parameter()
 
     def output(self):
-        output_files = {'fastq1' : self.accession_number + '.fastq'}
+        output_files = {'fastq1' : luigi.LocalTarget(self.accession_number + '.fastq')}
         if self.paired_end.lower() == 'true':
-            output_files = {'fastq1' : self.accession_number + '_1.fastq',
-                'fastq2' : self.accession_number + '_2.fastq'}
+            output_files = {'fastq1' : luigi.LocalTarget(self.accession_number + '_1.fastq'),
+                'fastq2' : luigi.LocalTarget(self.accession_number + '_2.fastq')}
 
         return output_files
 
@@ -33,9 +56,11 @@ class SraToolkitFastq(luigi.Task):
         command = ['fastq-dump']
 
         if self.paired_end.lower() == 'true':
-            command.append('---split-lines')
+            command.append('--split-files')
 
         command.append(self.accession_number)
+
+        return command
 
 class UncompressFastqgz(luigi.Task):
     """Task for uncompressing fastq files.
@@ -59,7 +84,7 @@ class UncompressFastqgz(luigi.Task):
 
     def requires(self):
         if self.fastq_local_file != '':
-            return utils.LocalFile(file_path=self.fastq_local_file)
+            return utils.LocalFile(file=self.fastq_local_file)
         else:
             return utils.Wget(url=self.fastq_url, output_file=self.output_file + '.gz')
 
@@ -69,7 +94,7 @@ class UncompressFastqgz(luigi.Task):
     def run(self):
         yield utils.UncompressFile(input_file=self.input().path, output_file=self.output().path)
 
-class GetFastq(utils.MetaOutputHandler, luigi.WrapperTask):
+class GetFastq(utils.MetaOutputHandler, luigi.Task):
     """Higher level task for the retrieval of the experiment fastq files.
 
     Three diferent sources for the fastq files are accepted: an existing local
@@ -92,6 +117,8 @@ class GetFastq(utils.MetaOutputHandler, luigi.WrapperTask):
             the reads are paired_end.
         compressed (bool): Non case sensitive boolean indicating wether
             the reads are compressed.
+        create_report (bool): A non case-sensitive boolean indicating wether 
+            to create a quality check report.
     """
 
     fastq1_local_file = luigi.Parameter(default='',description='Path to the fastq/ fastq.gz file. Use this parameter only if "from_local_file" is set to True.')
@@ -102,14 +129,15 @@ class GetFastq(utils.MetaOutputHandler, luigi.WrapperTask):
 
     accession_number = luigi.Parameter(default='', description="Optional string indicating the EBI accession number for retrieving the experiment.")
 
-    paired_end = luigi.Parameter(description="A boolean [Ture, False] indicating wether the experimwnt is paired ended or not.")
-    compressed = luigi.Parameter(description="A boolean [True,False] indicating wether the provided files are compressed or not.")
+    paired_end = luigi.Parameter(default='false', description="A non case-sensitive boolean indicating wether the experimwnt is paired ended or not.")
+    compressed = luigi.Parameter(default='false', description="A non case-sensitive boolean indicating wether the provided files are compressed or not.")
+    create_report = luigi.Parameter(default='false', description="A non case-sensitive boolean indicating wether to create a quality check report.")
 
     def requires(self):
         if self.accession_number != '' and self.fastq1_local_file == '' and self.fastq1_local_file == '':
-            return SraToolkitFastq(accession_number=self.paired_end, paired_end=self.paired_end)
+            return SraToolkitFastq(accession_number=self.accession_number, paired_end=self.paired_end)
 
-        if self.gz_compressed.lower() == 'true':
+        if self.compressed.lower() == 'true':
             if self.fastq1_local_file != '':
                 dependencies = {'fastq1' : UncompressFastqgz(
                         fastq_local_file=self.fastq1_local_file, 
@@ -122,12 +150,12 @@ class GetFastq(utils.MetaOutputHandler, luigi.WrapperTask):
                         output_file=path.join(utils.GlobalParams().base_dir, 'hg19_1.fastq'))}
         else:
             if self.fastq1_local_file != '':
-                dependencies = {'fastq1' : utils.LocalFile(self.fastq1_local_file)}
+                dependencies = {'fastq1' : utils.LocalFile(file=self.fastq1_local_file)}
             else:
                 dependencies = {'fastq1' : utils.Wget(url=self.fastq1_url, output_file=path.join(utils.GlobalParams().base_dir, 'hg19_1.fastq'))}
 
         if self.paired_end.lower() == 'true':
-            if self.gz_compressed.lower() == 'true':
+            if self.compressed.lower() == 'true':
                 if self.fastq2_local_file != '':
                     dependencies = {'fastq2' : UncompressFastqgz(
                             fastq_local_file=self.fastq2_local_file, 
@@ -140,11 +168,19 @@ class GetFastq(utils.MetaOutputHandler, luigi.WrapperTask):
                             output_file=path.join(utils.GlobalParams().base_dir, 'hg19_1.fastq'))}
             else:
                 if self.fastq2_local_file != '':
-                    dependencies = {'fastq2' : utils.LocalFile(self.fastq2_local_file)}
+                    dependencies = {'fastq2' : utils.LocalFile(file=self.fastq2_local_file)}
                 else:
                     dependencies = {'fastq2' : utils.Wget(url=self.fastq2_url, output_file=path.join(utils.GlobalParams().base_dir, 'hg19_1.fastq'))}
 
         return dependencies
+
+    def run(self):
+        if self.create_report.lower() == 'true':
+            report = [FastqcQualityCheck(fastq_file=self.input()['fastq1'].path)]
+            if self.paired_end.lower() == 'true':
+                report.append(FastqcQualityCheck(fastq_file=self.input()['fastq2'].path))
+
+            yield report
 
 if __name__ == '__main__':
     luigi.run(['GetFastq', 

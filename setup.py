@@ -27,6 +27,5 @@ setuptools.setup(
     install_requires=[
         'luigi',
         'python-daemon'
-    ],
-    }
+    ]
 )

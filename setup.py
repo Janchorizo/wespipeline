@@ -6,7 +6,7 @@ with open("README.rst", "r") as fh:
 
 setuptools.setup(
     name="wespipeline-jancho",
-    version="0.0.3b",
+    version="0.1",
     author="Alejandro Rodríguez Díaz",
     author_email="jancho@usal.es",
     description="An implementation of a whole exome analysis pipeline using the library Luigi for workflow management.",

@@ -10,7 +10,7 @@ Wespipeline : A whole exome secuencing variant calling pipeline
 
 .. toctree::
    :caption: Using the pipeline
-   :maxdepth: 2
+   :maxdepth: 3
 
    use/requirements
    use/installation
@@ -32,6 +32,7 @@ Wespipeline : A whole exome secuencing variant calling pipeline
 
     implementation/steps
     implementation/expand
+    modules
 
 Indices and tables
 ==================

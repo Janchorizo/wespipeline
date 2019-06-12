@@ -18,37 +18,114 @@ Optionally, some type of database is needed for making use of the persistent sto
 of executions. In the configuration proposed, is used.
 
 Even though pip packages dependencies are resolved upon installation, third party tools are not.
-There are two groups of dependencies attending to their : functional and documenting.
+These extra dependencies are *not compulsary for all executions of the pipeline*, but depend on the
+parameters and tasks selected.
 
-Functional dependencies are packages needed for the essential steps such as the alignment or 
-marking duplicates. These are the following :
+Each of the dependencies correspond to a specific need in one or more of the steps, and thus 
+are organized in that manner bellow.
 
-* Bwa
-* Samtools
-* Gatk
-* Vcftools
+* Secuence retrieval : Sra Toolkit, Fastqc
 
-Five different options are given for doing the variant calling. Depending on the desired tools,
-the correspondent packages must be installed.
+* Reference genome retrieval : No needed dependency
 
-* Bwa
-* Freebayes
-* Gatk
-* Deepvariant
+* Secuence alignment : Bwa
 
-Optional dependencies
-^^^^^^^^^^^^^^^^^^^^^
+* Alignment processing : Bwa Samtools, 
 
-A set of tools can be used for generating reports for the different steps in the pipeline. They are
-not required by default, but must be installed if the correspondent option is selected.
+* Variant calling : Freebayes, Varscan, Gatk, Deepvariant
 
-* Fastqcheck
+* Variant calling evaluation : Vcf tools
 
-**It is encauraged to use the Anaconda distribution** for software installation if possible. Most of
-the cited packages are available through the Anaconda distribution, which allows to make the installation
-with a simple command.
+Installing through Anaconda distributions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-An example for installing Miniconda and the needed packages is the following :
+Even though most of the programs listed can be installed through various different ways, I 
+encourage the use of the `Anaconda Distribution <https://www.anaconda.com/distribution/>`_, one of the biggest platforms for 
+installing the tools from well trusted sources. Optionally, `Miniconda <https://docs.conda.io/en/latest/miniconda.html>`_ can be used too
+for a lighter version of the package manager.
+
+Installing miniconda is a simple task. Following an example installation for a x64 linux machine:
+
+.. code-block:: bash
+
+  wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda. 
+  bash ~/miniconda.sh -b -p $HOME/miniconda && rm ~/miniconda.sh
+  export PATH="$HOME/miniconda/bin:$PATH"
+
+Beware that, in order for the utilities and installed packages to be accessible the environment
+must be activated:
+
+.. code-block:: bash
+  
+  source $HOME/miniconda/bin/activate
+
+The package archive is distributed through different channels, two of which are needed for the
+installation of these packages. Easier than specifying the channel for each command is adding the channels:
+
+.. code-block:: bash
+
+  conda config --add channels bioconda 
+  conda config --add channels conda-forge 
+
+Installing from the repositories is a simple task doable through one-liner commands. Following
+is an elaborated list of the installation commands for all of the external depenedencies listed
+above, and a command for instaling them together:
+
+Installing Samtools
+
+.. code-block:: bash
+
+  conda install -y samtools
+
+Installing Bwa
+
+.. code-block:: bash
+
+  conda install -y bwa
+
+Installing Picard
+
+.. code-block:: bash
+
+  conda install -y picard
+
+Installing Platypus
+
+.. code-block:: bash
+
+  conda install -y platypus-variant
+
+Installing Varscan
+
+.. code-block:: bash
+
+  conda install -y varscan
+
+Installing Freebayes
+
+.. code-block:: bash
+
+  conda install -y freebayes
+
+Installing VCFtools
+
+.. code-block:: bash
+
+  conda install -y vcftools
+
+Installing Fastqc
+
+.. code-block:: bash
+
+  conda install -y fastqc
+
+Installing Sra Toolkit
+
+.. code-block:: bash
+
+  conda install -y sra-tools
+
+Installing all dependencies with a single command:
 
 .. code-block:: bash
 

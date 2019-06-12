@@ -1,12 +1,8 @@
 import luigi
 from luigi.contrib.external_program import ExternalProgramTask
 from os import path
-from tasks.utils import MetaOutputHandler
-from tasks.utils import Wget
-from tasks.utils import GlobalParams
-from tasks.utils import UncompressFile
-from tasks.utils import LocalFile
-
+from wespipeline import utils 
+    
 class SraToolkitFastq(luigi.Task):
     """Task used for downloading fastq files from the NVBI archive.
 
@@ -63,17 +59,17 @@ class UncompressFastqgz(luigi.Task):
 
     def requires(self):
         if self.fastq_local_file != '':
-            return LocalFile(file_path=self.fastq_local_file)
+            return utils.LocalFile(file_path=self.fastq_local_file)
         else:
-            return Wget(url=self.fastq_url, output_file=self.output_file + '.gz')
+            return utils.Wget(url=self.fastq_url, output_file=self.output_file + '.gz')
 
     def output(self):
         return luigi.LocalTarget(self.output_file)
 
     def run(self):
-        yield UncompressFile(input_file=self.input().path, output_file=self.output().path)
+        yield utils.UncompressFile(input_file=self.input().path, output_file=self.output().path)
 
-class GetFastq(MetaOutputHandler, luigi.WrapperTask):
+class GetFastq(utils.MetaOutputHandler, luigi.WrapperTask):
     """Higher level task for the retrieval of the experiment fastq files.
 
     Three diferent sources for the fastq files are accepted: an existing local
@@ -110,7 +106,7 @@ class GetFastq(MetaOutputHandler, luigi.WrapperTask):
     compressed = luigi.Parameter(description="A boolean [True,False] indicating wether the provided files are compressed or not.")
 
     def requires(self):
-        if self.accession_number != '' self.fastq1_local_file == '' and self.fastq1_local_file == '':
+        if self.accession_number != '' and self.fastq1_local_file == '' and self.fastq1_local_file == '':
             return SraToolkitFastq(accession_number=self.paired_end, paired_end=self.paired_end)
 
         if self.gz_compressed.lower() == 'true':
@@ -123,12 +119,12 @@ class GetFastq(MetaOutputHandler, luigi.WrapperTask):
                 dependencies = {'fastq1' : UncompressFastqgz(
                         fastq_local_file=self.fastq1_local_file, 
                         fastq_url=self.fastq1_url, 
-                        output_file=path.join(GlobalParams().base_dir, 'hg19_1.fastq'))}
+                        output_file=path.join(utils.GlobalParams().base_dir, 'hg19_1.fastq'))}
         else:
             if self.fastq1_local_file != '':
-                dependencies = {'fastq1' : LocalFile(self.fastq1_local_file)}
+                dependencies = {'fastq1' : utils.LocalFile(self.fastq1_local_file)}
             else:
-                dependencies = {'fastq1' : Wget(url=self.fastq1_url, output_file=path.join(GlobalParams().base_dir, 'hg19_1.fastq'))}
+                dependencies = {'fastq1' : utils.Wget(url=self.fastq1_url, output_file=path.join(utils.GlobalParams().base_dir, 'hg19_1.fastq'))}
 
         if self.paired_end.lower() == 'true':
             if self.gz_compressed.lower() == 'true':
@@ -141,12 +137,12 @@ class GetFastq(MetaOutputHandler, luigi.WrapperTask):
                     dependencies = {'fastq2' : UncompressFastqgz(
                             fastq_local_file=self.fastq2_local_file, 
                             fastq_url=self.fastq2_url, 
-                            output_file=path.join(GlobalParams().base_dir, 'hg19_1.fastq'))}
+                            output_file=path.join(utils.GlobalParams().base_dir, 'hg19_1.fastq'))}
             else:
                 if self.fastq2_local_file != '':
-                    dependencies = {'fastq2' : LocalFile(self.fastq2_local_file)}
+                    dependencies = {'fastq2' : utils.LocalFile(self.fastq2_local_file)}
                 else:
-                    dependencies = {'fastq2' : Wget(url=self.fastq2_url, output_file=path.join(GlobalParams().base_dir, 'hg19_1.fastq'))}
+                    dependencies = {'fastq2' : utils.Wget(url=self.fastq2_url, output_file=path.join(utils.GlobalParams().base_dir, 'hg19_1.fastq'))}
 
         return dependencies
 

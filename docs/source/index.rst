@@ -32,7 +32,8 @@ Wespipeline : A whole exome secuencing variant calling pipeline
 
     implementation/steps
     implementation/expand
-    modules
+    modules/modules
+    modules/*
 
 Indices and tables
 ==================

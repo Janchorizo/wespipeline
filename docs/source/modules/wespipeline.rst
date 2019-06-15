@@ -11,10 +11,31 @@ Subpackages
 Submodules
 ----------
 
+wespipeline.align module
+------------------------
+
+.. automodule:: wespipeline.align
+   :members:
+   :undoc-members:
+   :show-inheritance:
 wespipeline.fastq module
 ------------------------
 
 .. automodule:: wespipeline.fastq
+   :members:
+   :undoc-members:
+   :show-inheritance:
+wespipeline.processalign module
+-------------------------------
+
+.. automodule:: wespipeline.processalign
+   :members:
+   :undoc-members:
+   :show-inheritance:
+wespipeline.reference module
+----------------------------
+
+.. automodule:: wespipeline.reference
    :members:
    :undoc-members:
    :show-inheritance:

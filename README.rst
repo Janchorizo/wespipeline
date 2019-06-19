@@ -1,56 +1,37 @@
 wespipeline
 ===========
-Source code repository for the Python package wespipeline. An implementation of a whole exome analysis pipeline using Luigi for workflow management.
+An implementation of a whole exome analysis pipeline using `Luigi <https://github.com/spotify/luigi/>`_ for workflow management.
 
-The usage of data pipelines for automating and streamline bioinformatic processes helps reduce the overhead of having to 
-learn and operate a wide range of tools, thus simplifying the analysis. Additionally, data pipelines provide with utilities
-for managing resources, ginving a homogeneous access to sources, and ensuring a robust execution model that resolves
-dependencies automatically.
+.. figure:: https://raw.githubusercontent.com/janchorizo/wespipeline/master/doc/steps.png
+   :alt: Steps Logo
+   :align: center
 
-The former is the implementation of a data pipeline for variant calling analysis in whole exome sequencing experiments. The
-package provides tasks for been executed with Luigi, a library for managing pipeline workflows.
+This package provides with the implementation of tasks for executing partial or complete variant calling 
+analysis with the advantages of having a workflow manager: dependency resolution, execution planner,
+modularity, monitoring and historic.
 
-Run the whole analysis pipeline or just separate steps.
+Documentation for the latest version is being hosted by `readthedocs <https://wespipeline.readthedocs.io/en/latest/>`_
 
-_Documentation for the latest version is being hosted by `readthedocs <https://wespipeline.readthedocs.io/en/latest/>`_.
+Installation
+------------
+Wespipeline is available through pip, conda and manual installation. Install it from the package repositories
+``pip3 install wespipeline`` ``conda install wespipeline``, or download the project and place it in a place 
+accessible to Python.
 
-Getting Started
----------------
+Notice that executing the analysis will involve additional dependencies. These are cited below and can be
+downloaded with the Anaconda distribution:
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
+* Secuence retrieval : Sra Toolkit, Fastqc
 
-Prerequisites
-+++++++++++++
+* Reference genome retrieval : No needed dependency
 
-Even though pip packages dependencies are resolved upon installation, third party tools are not.
-There are two groups of dependencies attending to their : functional and documenting.
+* Secuence alignment : Bwa
 
-Functional dependencies are packages needed for the essential steps such as the alignment or 
-marking duplicates. These are the following :
+* Alignment processing : Bwa Samtools, 
 
-* Bwa
-* Samtools
-* Gatk
-* Vcftools
+* Variant calling : Freebayes, Varscan, Gatk, Deepvariant
 
-Five different options are given for doing the variant calling. Depending on the desired tools,
-the correspondent packages must be installed.
-
-* Bwa
-* Freebayes
-* Gatk
-* Deepvariant
-
-A set of tools can be used for generating reports for the different steps in the pipeline. They are
-not required by default, but must be installed if the correspondent option is selected.
-
-* Fastqcheck
-
-**It is encauraged to use the Anaconda distribution** for software installation if possible. Most of
-the cited packages are available through the Anaconda distribution, which allows to make the installation
-with a simple command.
-
-An example for installing Miniconda and the needed packages is the following :
+* Variant calling evaluation : Vcf tools
 
 .. code-block:: bash
 
@@ -66,88 +47,97 @@ An example for installing Miniconda and the needed packages is the following :
        conda install -y platypus-variant && \
        conda install -y varscan && \
        conda install -y freebayes && \
+       conda install -y fastqc && \
+       conda install -y sra-tools && \
        conda install -y vcftools 
 
    rm ~/miniconda.sh
 
+Getting started
+---------------
+Installing or downloading the package will provide with a higher level task per step of the
+analysis, each of which can be executed in a similar fashion to other Luigi tasks.
 
+Each of the six steps have a higher level task that can be scheduled in a similar fashion
+to other Luigi tasks:
 
-Installing
-++++++++++
+.. code-block:: bash
 
-Run ```pip install wespipeline``` to install the latest stable version from PyPI. Documentation for the
-latest release is hosted on readthedocs.
+	python3 -m luigi --module wespipeline.<module> <Taskname> --<Taskname>-param value
 
-To install from source, download the project ```git clone https://github.com/janchorizo/wespipeline.git```
-and run ```python3 setup.py install``` in the root directoy.
+Download the sequences using the NCBI accession number.
 
-Usage
-+++++
+.. code-block:: bash 
 
-Each of the modules in the package contains tasks for executing a specific setp in the analysis pipline.
-Use Luigi's typipcal call format for launching the execution of a task:
+	python3 -m luigi --module wespipeline.fastq FastqRetrieval \
+		--FastqRetrieval-paired-end true \
+		--FastqRetrieval-accession-number SRR9209557 \
+		--FastqRetrieval-create-report true
 
-```luigi -m wespipeline.reference GetReference --GlobalParams-exp-name hg19 --workers 2 --local-scheduler```
+Or an external url.
 
-Running the tests
+.. code-block:: bash
+
+	python3 -m luigi --module wespipeline.fastq FastqRetrieval \
+		--FastqRetrieval-paired-end true \
+		--FastqRetrieval-compressed false \
+		--FastqRetrieval-accession-number SRR9209557 \
+		--FastqRetrieval-create-report true
+
+Download the reference genome and create a report using FastqC.
+
+.. code-block:: bash
+
+	python3.6 -m luigi --module tasks.reference ReferenceRetrieval 
+		--workers 3 \
+		--ReferenceGenome-ref-url ftp://hgdownload.cse.ucsc.edu/goldenPath/hg19/bigZips/hg19.2bit \
+		--ReferenceGenome-from2bit True \
+		--GlobalParams-base-dir ./tfm_experiment \
+		--GlobalParams-log-dir .logs \
+		--GlobalParams-exp-name hg19
+
+Or run the whole analysis, specifying the parameters for each of the steps.
+
+.. code-block:: bash
+
+	python3 -m luigi --module tasks.vcf VariantCalling 
+		--workers 3 
+		--VariantCalling-use-platypus true 
+		--VariantCalling-use-freebayes true 
+		--VariantCalling-use-samtools false 
+		--VariantCalling-use-gatk false 
+		--VariantCalling-use-deepcalling false 
+		--AlignProcessing-cpus 6 
+		--FastqAlign-cpus 6 
+		--FastqAlign-create-report True 
+		--GetFastq-gz-compressed True 
+		--GetFastq-fastq1-url ftp://ftp-trace.ncbi.nih.gov/giab/ftp/data/NA12878/Garvan_NA12878_HG001_HiSeq_Exome/NIST7035_TAAGGCGA_L001_R1_001.fastq.gz 
+		--GetFastq-fastq2-url ftp://ftp-trace.ncbi.nih.gov/giab/ftp/data/NA12878/Garvan_NA12878_HG001_HiSeq_Exome/NIST7035_TAAGGCGA_L001_R2_001.fastq.gz 
+		--GetFastq-from-ebi False 
+		--GetFastq-paired-end True 
+		--ReferenceGenomeRetrieval-ref-url ftp://hgdownload.cse.ucsc.edu/goldenPath/hg19/bigZips/hg19.2bit --ReferenceGenomeRetrieval-from2bit True 
+		--GlobalParams-base-dir ./tfm_experiment 
+		--GlobalParams-log-dir .logs 
+		--GlobalParams-exp-name hg19 
+
+Tasks implemented
 -----------------
 
-Explain how to run the automated tests for this system
++------------------------+------------+----------+
+| Module   | Task   | Definition |
++========================+============+==========+
+|  reference   | ReferenceGenomeRetrieval  | column 3 |
++------------------------+------------+----------+
+| fastq   | FastqRetrieval   | column 3 |
++------------------------+------------+----------+
+| align   | FastqAlignment   | column 3 |
++------------------------+------------+----------+
+| processalign   | FastqProcessing   | column 3 |
++------------------------+------------+----------+
+| variantcalling   |    | VariantCalling |
++------------------------+------------+----------+
+| processalign   |  VariantProcessing   | column 3 |
++------------------------+------------+----------+
 
-Break down into end to end tests
-------------------------------------
-Explain what these tests test and why
-
-```
-Give an example
-```
-
-And coding style tests
-
-Explain what these tests test and why
-
-```
-Give an example
-```
-
-Deployment
-----------
-
-Add additional notes about how to deploy this on a live system
-
-Built With
-----------
-
-* [Dropwizard](http://www.dropwizard.io/1.0.2/docs/) - The web framework used
-* [Maven](https://maven.apache.org/) - Dependency Management
-* [ROME](https://rometools.github.io/rome/) - Used to generate RSS Feeds
-
-Contributing
-------------
-
-Please read [CONTRIBUTING.md](https://gist.github.com/PurpleBooth/b24679402957c63ec426) for details on our code of conduct, and the process for submitting pull requests to us.
-
-Versioning
-----------
-
-We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/your/project/tags). 
-
-Authors
--------
-
-* **Billie Thompson** - *Initial work* - [PurpleBooth](https://github.com/PurpleBooth)
-
-See also the list of [contributors](https://github.com/your/project/contributors) who participated in this project.
-
-
-License
--------
-
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
-
-Acknowledgments
-
-* **Billie Thompson** - *Initial work* - [PurpleBooth](https://github.com/PurpleBooth)
-* Inspiration
-* etc
-
+Acknowledgements
+----------------

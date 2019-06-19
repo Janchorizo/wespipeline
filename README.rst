@@ -1,4 +1,4 @@
-wespipeline
+Wespipeline
 ===========
 An implementation of a whole exome analysis pipeline using `Luigi <https://github.com/spotify/luigi/>`_ for workflow management.
 
@@ -123,21 +123,21 @@ Or run the whole analysis, specifying the parameters for each of the steps.
 Tasks implemented
 -----------------
 
-+------------------------+------------+----------+
-| Module   | Task   | Definition |
-+========================+============+==========+
-|  reference   | ReferenceGenomeRetrieval  | column 3 |
-+------------------------+------------+----------+
-| fastq   | FastqRetrieval   | column 3 |
-+------------------------+------------+----------+
-| align   | FastqAlignment   | column 3 |
-+------------------------+------------+----------+
-| processalign   | FastqProcessing   | column 3 |
-+------------------------+------------+----------+
-| variantcalling   |    | VariantCalling |
-+------------------------+------------+----------+
-| processalign   |  VariantProcessing   | column 3 |
-+------------------------+------------+----------+
++-----------------+----------------------------+
+| Module          | Task                       |
++=================+============================+
+| reference       | ReferenceGenomeRetrieval   |
++-----------------+----------------------------+
+| fastq           | FastqRetrieval             |
++-----------------+----------------------------+
+| align           | FastqAlignment             |
++-----------------+----------------------------+
+| processalign    | FastqProcessing            |
++-----------------+----------------------------+
+| variantcalling  |    | VariantCalling        |
++-----------------+----------------------------+
+| processalign    |  VariantProcessing         |
++-----------------+----------------------------+
 
 Acknowledgements
 ----------------

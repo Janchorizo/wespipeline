@@ -2,7 +2,7 @@ wespipeline
 ===========
 An implementation of a whole exome analysis pipeline using `Luigi <https://github.com/spotify/luigi/>`_ for workflow management.
 
-.. figure:: https://raw.githubusercontent.com/janchorizo/wespipeline/master/doc/steps.png
+.. figure:: https://raw.githubusercontent.com/janchorizo/wespipeline/master/docs/steps.png
    :alt: Steps Logo
    :align: center
 

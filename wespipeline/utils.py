@@ -25,7 +25,10 @@ class MetaOutputHandler:
     """Helper class for propagating inputs in WrapperTasks"""
 
     def output(self):
-        return {key: task for key,task in self.input().items()}
+        if type(self.input()) == luigi.LocalTarget:
+            return self.input()
+        elif type(self.input()) == dict:
+            return {key: task for key,task in self.input().items()}
 
 class LocalFile(luigi.Task):
     """Helper task for making.

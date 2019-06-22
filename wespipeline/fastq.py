@@ -11,16 +11,20 @@ class FastqcQualityCheck(ExternalProgramTask):
     about the quality of the reads.
 
     Parameters:
-        fastq_file (str): Path os the fastq file to be analyzed.
+        fastq_file (str): Path for the fastq file to be analyzed.
+
+    Output:
+        html (luigi.LocalTarget) : File containing the report for fastqc quality.
+
     """
 
     fastq_file = luigi.Parameter()
 
     def output(self):
-        return [
-            luigi.LocalTarget(self.fastq_file.replace('.fastq', '_fastqc.html')),
-            luigi.LocalTarget(self.fastq_file.replace('.fastq', '_fastqc.zip')),
-        ]
+        return {
+            'html' : luigi.LocalTarget(self.fastq_file.replace('.fastq', '_fastqc.html')),
+            'zip' : luigi.LocalTarget(self.fastq_file.replace('.fastq', '_fastqc.zip')),
+        }
 
     def program_args(self):
         return ['fastqc', '-f', 'fastq', self.fastq_file]
@@ -39,6 +43,16 @@ class SraToolkitFastq(ExternalProgramTask):
         accession_number (str): NCBI accession number for the experiment.
         paired_end (bool): Non case sensitive boolean indicating wether
             the reads are paired_end.
+
+    Output:
+        A dict mapping keys to `luigi.LocalTarget` instances for each of the 
+        processed files. 
+        The following keys are available:
+
+        'fastq1' : Local file with the fastq file with the experiment's reads.     
+        'fastq2' : In case of paired end experiments, a local file with the fastq 
+            file with the experiment's reads.     
+
     """
 
     accession_number = luigi.Parameter()
@@ -76,6 +90,10 @@ class UncompressFastqgz(luigi.Task):
             the compressed fastq file.
         output_file (str): String indicating the desired location and name 
             the output uncompressed fastq file.
+
+    Output:
+        A `luigi.LocalTarget` instance for the uncompressed fastq file.
+
     """
 
     fastq_local_file = luigi.Parameter(default='')
@@ -119,6 +137,16 @@ class GetFastq(utils.MetaOutputHandler, luigi.Task):
             the reads are compressed.
         create_report (bool): A non case-sensitive boolean indicating wether 
             to create a quality check report.
+
+    Output:
+        A dict mapping keys to `luigi.LocalTarget` instances for each of the 
+        processed files. 
+        The following keys are available:
+
+        'fastq1' : Local file with the fastq file with the experiment's reads.     
+        'fastq2' : In case of paired end experiments, a local file with the fastq 
+            file with the experiment's reads.     
+
     """
 
     fastq1_local_file = luigi.Parameter(default='',description='Path to the fastq/ fastq.gz file. Use this parameter only if "from_local_file" is set to True.')

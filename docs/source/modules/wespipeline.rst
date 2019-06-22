@@ -46,6 +46,13 @@ wespipeline.utils module
    :members:
    :undoc-members:
    :show-inheritance:
+wespipeline.vcf module
+----------------------
+
+.. automodule:: wespipeline.vcf
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 
 Module contents

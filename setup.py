@@ -1,5 +1,7 @@
 import os
 import setuptools
+import sys
+sys.setdefaultencoding("UTF-8")
 
 with open("README.rst", "r") as fh:
     long_description = fh.read()

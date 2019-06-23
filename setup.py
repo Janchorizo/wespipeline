@@ -5,7 +5,7 @@ with open("README.rst", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="wespipeline-jancho",
+    name="wespipeline",
     version="0.9.0",
     author="Alejandro Rodríguez Díaz",
     author_email="jancho@usal.es",

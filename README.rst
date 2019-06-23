@@ -141,3 +141,5 @@ Tasks implemented
 
 Acknowledgements
 ----------------
+
+Special thanks to ...

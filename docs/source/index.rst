@@ -23,7 +23,6 @@ Wespipeline : A whole exome secuencing variant calling pipeline
     :caption: The analysis pipeline
 
     analysis/description
-    analysis/steps
     analysis/example
 
 .. toctree::
@@ -33,7 +32,6 @@ Wespipeline : A whole exome secuencing variant calling pipeline
     implementation/steps
     implementation/expand
     modules/modules
-    modules/*
 
 Indices and tables
 ==================

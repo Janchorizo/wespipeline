@@ -1,13 +1,6 @@
 wespipeline package
 ===================
 
-Subpackages
------------
-
-.. toctree::
-
-   wespipeline.tests
-
 Submodules
 ----------
 
@@ -50,6 +43,13 @@ wespipeline.vcf module
 ----------------------
 
 .. automodule:: wespipeline.vcf
+   :members:
+   :undoc-members:
+   :show-inheritance:
+wespipeline.vcfanalysis module
+------------------------------
+
+.. automodule:: wespipeline.vcfanalysis
    :members:
    :undoc-members:
    :show-inheritance:

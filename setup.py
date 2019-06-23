@@ -1,14 +1,14 @@
+# -*- coding: utf8 -*-
+
 import os
 import setuptools
-import sys
-sys.setdefaultencoding("UTF-8")
 
 with open("README.rst", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
     name="wespipeline",
-    version="0.9.1",
+    version="0.9.2",
     author="Alejandro Rodríguez Díaz",
     author_email="jancho@usal.es",
     description="An implementation of a whole exome analysis pipeline using the library Luigi for workflow management.",

@@ -15,23 +15,21 @@ Documentation for the latest version is being hosted by `readthedocs <https://we
 Installation
 ^^^^^^^^^^^^
 Wespipeline is available through pip, conda and manual installation. Install it from the package repositories
-``pip3 install wespipeline`` ``conda install wespipeline``, or download the project and place it in a place 
-accessible to Python.
+``pip3 install wespipeline`` ``conda install -c jancho wespipeline``, or download the project and build from source:
+``git clone https://github.com/Janchorizo/wespipeline.git && cd wespipeline && python3 setup.py install``.
 
-Notice that executing the analysis will involve additional dependencies. These are cited below and can be
-downloaded with the Anaconda distribution:
+Notice that executing the analysis will involve different additional dependencies depending on the steps that executed and the 
+parameters set for these. All possible are cited below and can be downloaded with the Anaconda distribution:
 
 * Secuence retrieval : Sra Toolkit, Fastqc
-
 * Reference genome retrieval : No needed dependency
-
 * Secuence alignment : Bwa
-
 * Alignment processing : Bwa Samtools, 
-
 * Variant calling : Freebayes, Varscan, Gatk, Deepvariant
-
 * Variant calling evaluation : Vcf tools
+
+In addition to the dependencies, conda can be used for installing the *wespipeline* package. An example for
+installing the miniconda distribution, the package and the dependencies is:
 
 .. code-block:: bash
 
@@ -41,6 +39,7 @@ downloaded with the Anaconda distribution:
    source $HOME/miniconda/bin/activate && \
        conda config --add channels bioconda && \
        conda config --add channels conda-forge && \
+       conda config --add channels jancho && \
        conda install -y samtools && \
        conda install -y bwa && \
        conda install -y picard && \
@@ -49,7 +48,7 @@ downloaded with the Anaconda distribution:
        conda install -y freebayes && \
        conda install -y fastqc && \
        conda install -y sra-tools && \
-       conda install -y vcftools 
+       conda install -y wespipeline
 
    rm ~/miniconda.sh
 
@@ -135,7 +134,7 @@ Tasks implemented
 +-----------------+----------------------------+
 | processalign    | FastqProcessing            |
 +-----------------+----------------------------+
-| variantcalling  |    | VariantCalling        |
+| variantcalling  | VariantCalling             |
 +-----------------+----------------------------+
 | processalign    |  VariantProcessing         |
 +-----------------+----------------------------+
@@ -143,4 +142,5 @@ Tasks implemented
 Acknowledgements
 ^^^^^^^^^^^^^^^^
 
-Special thanks to ...
+Special thanks to professor Luis Antonio Miguel Quintales for all the guidance and help provided during the
+development of this project.

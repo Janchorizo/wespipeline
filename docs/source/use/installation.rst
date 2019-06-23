@@ -8,7 +8,7 @@ To install from source, download the project ```git clone https://github.com/jan
 and run ```python3 setup.py install``` in the root directoy.
 
 Usage
-+++++
+^^^^^
 
 Each of the modules in the package contains tasks for executing a specific setp in the analysis pipline.
 Use Luigi's typipcal call format for launching the execution of a task:

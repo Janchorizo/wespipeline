@@ -13,7 +13,7 @@ modularity, monitoring and historic.
 Documentation for the latest version is being hosted by `readthedocs <https://wespipeline.readthedocs.io/en/latest/>`_
 
 Installation
-------------
+^^^^^^^^^^^^
 Wespipeline is available through pip, conda and manual installation. Install it from the package repositories
 ``pip3 install wespipeline`` ``conda install wespipeline``, or download the project and place it in a place 
 accessible to Python.
@@ -54,7 +54,8 @@ downloaded with the Anaconda distribution:
    rm ~/miniconda.sh
 
 Getting started
----------------
+^^^^^^^^^^^^^^^
+
 Installing or downloading the package will provide with a higher level task per step of the
 analysis, each of which can be executed in a similar fashion to other Luigi tasks.
 
@@ -121,7 +122,7 @@ Or run the whole analysis, specifying the parameters for each of the steps.
 		--GlobalParams-exp-name hg19 
 
 Tasks implemented
------------------
+^^^^^^^^^^^^^^^^^
 
 +-----------------+----------------------------+
 | Module          | Task                       |
@@ -140,6 +141,6 @@ Tasks implemented
 +-----------------+----------------------------+
 
 Acknowledgements
-----------------
+^^^^^^^^^^^^^^^^
 
 Special thanks to ...

@@ -92,7 +92,38 @@ original alignment. In the end, it produces a bam and bai file.
 Variant calling
 +++++++++++++++
 
-The process of identifying variants within the secuenced exome.
+Variants can be obatined with different tools; each of which depends in the reference 
+genome retrieval (``wespipeline.reference.ReferenceGenome``) and the align processing step
+(``wespipeline.processalign.AlignProcessing``).
+
+The desired tools to be used are specified as boolean parameters, from a total of five
+eligible:
+
+- Platypus
+- Freebayes
+- DeepVariant
+- Gatk
+- Samtools
+
+.. warning:: DeepVariant requires `Docker <https://www.docker.com/>`_ to be installed. Additionally,
+   it needs the Python Docker package for Luigi to interact with it; this last one is a dependency
+   specified in the package, so it will be automatically installed if *wespipeline* is installed with
+   a package manager.
+
+   An example for using DeepVariant on reference genome, and bam files located in the current directory
+   would be the following:
+
+.. code:: bash
+   
+   python3 -m luigi --module wespipeline.vcf VariantCalling 
+   --VariantCalling-use-deepvariant True  \
+   --VariantCalling-cpus 2  \
+   --ReferenceGenome-reference-local-file hg19.fa  \
+   --AlignProcessing-no-dup-bam-local-file hg19_nodup.bam  \
+   --AlignProcessing-no-dup-bai-local-file hg19_nodup.bam.bai  \
+   --GlobalParams-exp-name hg19  \
+   --GlobalParams-base-dir .  \
+   --GlobalParams-log-dir . \
 
 Variant calling evaluation
 ++++++++++++++++++++++++++
@@ -113,8 +144,7 @@ The following command allows to execute the pipeline for...
 
 .. code:: bash
    
-   PYTHONPATH=./luigi-wes-pipeline/pipeline/ nohup python3.6 -m luigi \ 
-   --module tasks.vcf_analysis VariantCallingAnalysis \ 
+   nohup python3.6 -m luigi --module wespipeline.vcf_analysis VariantCallingAnalysis \ 
    --workers 3 \ 
    --VariantCalling-use-platypus true \ 
    --VariantCalling-use-freebayes true \ 

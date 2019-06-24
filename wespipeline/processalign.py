@@ -153,7 +153,7 @@ class AlignProcessing(utils.MetaOutputHandler, luigi.WrapperTask):
 
     """
 
-    cpus = luigi.Parameter(description="Number of cpus to be used by each task thread.")
+    cpus = luigi.IntParameter(default=1, description="Number of cpus to be used by each task thread.")
     bam_local_file = luigi.Parameter(default='', description='Optional path for the file. If set, wil be skipped.')
     bai_local_file = luigi.Parameter(default='', description='Optional path for the file. If set, wil be skipped.')
     no_dup_bam_local_file = luigi.Parameter(default='', description='Optional path for the file. If set, wil be skipped.')
@@ -161,20 +161,20 @@ class AlignProcessing(utils.MetaOutputHandler, luigi.WrapperTask):
 
     def requires(self):
         if self.no_dup_bam_local_file != '' and self.no_dup_bai_local_file != '':
-            bam = utils.LocalFile(file_path=self.no_dup_bam_local_file)
-            bai = utils.LocalFile(file_path=self.no_dup_bai_local_file)
-            bamNoDup = utils.LocalFile(file_path=self.no_dup_bam_local_file)
-            baiNoDup = utils.LocalFile(file_path=self.no_dup_bai_local_file)
+            bam = utils.LocalFile(file=self.no_dup_bam_local_file)
+            bai = utils.LocalFile(file=self.no_dup_bai_local_file)
+            bamNoDup = utils.LocalFile(file=self.no_dup_bam_local_file)
+            baiNoDup = utils.LocalFile(file=self.no_dup_bai_local_file)
         else:
             bamNoDup = Picardmarkduplicates()
             baiNoDup = IndexBam()
 
         if self.bam_local_file != '' and self.bai_local_file != '':
-            bam = utils.LocalFile(file_path=self.bam_local_file)
-            bai = utils.LocalFile(file_path=self.bai_local_file)
+            bam = utils.LocalFile(file=self.bam_local_file)
+            bai = utils.LocalFile(file=self.bai_local_file)
         else:
             bam = SortSam()
-            bai = IndexSam()
+            bai = IndexBam()
 
         return {
             'bam' : bam,

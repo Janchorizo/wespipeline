@@ -120,13 +120,15 @@ class FaidxIndex(ExternalProgramTask):
     """
 
     def requires(self): 
-        return GetReferenceFa(from2bit=ReferenceGenome().from_2bit ,ref_url=ReferenceGenome().ref_url)
+        return GetReferenceFa(reference_local_file=ReferenceGenome().reference_local_file,
+                from2bit=ReferenceGenome().from2bit ,
+                ref_url=ReferenceGenome().ref_url)
 
     def output(self):
         return luigi.LocalTarget(self.input().path+'.fai')
 
     def program_args(self):
-        return ['samtools', 'faidx', self.input()['fa'].path]
+        return ['samtools', 'faidx', self.input().path]
 
 class BwaIndex(ExternalProgramTask):
     """Task user for indexing the reference genome .fa file with the bwa index utility.
@@ -143,26 +145,28 @@ class BwaIndex(ExternalProgramTask):
     """
 
     def requires(self): 
-        return GetReferenceFa(from2bit=ReferenceGenome().from_2bit ,ref_url=ReferenceGenome().ref_url)
+        return GetReferenceFa(reference_local_file=ReferenceGenome().reference_local_file,
+                from2bit=ReferenceGenome().from2bit ,
+                ref_url=ReferenceGenome().ref_url)
 
     def output(self):
         outputs = set()
 
         outputs.add(
             luigi.LocalTarget(
-                path.join(utils.GlobalParams().base_dir, utils.GlobalParams().exp_name+".fa.amb")))
+                os.path.join(utils.GlobalParams().base_dir, utils.GlobalParams().exp_name+".fa.amb")))
         outputs.add(
             luigi.LocalTarget(
-                path.join(utils.GlobalParams().base_dir, utils.GlobalParams().exp_name+".fa.ann")))
+                os.path.join(utils.GlobalParams().base_dir, utils.GlobalParams().exp_name+".fa.ann")))
         outputs.add(
             luigi.LocalTarget(
-                path.join(utils.GlobalParams().base_dir, utils.GlobalParams().exp_name+".fa.bwt")))
+                os.path.join(utils.GlobalParams().base_dir, utils.GlobalParams().exp_name+".fa.bwt")))
         outputs.add(
             luigi.LocalTarget(
-                path.join(utils.GlobalParams().base_dir, utils.GlobalParams().exp_name+".fa.pac")))
+                os.path.join(utils.GlobalParams().base_dir, utils.GlobalParams().exp_name+".fa.pac")))
         outputs.add(
             luigi.LocalTarget(
-                path.join(utils.GlobalParams().base_dir, utils.GlobalParams().exp_name+".fa.sa")))
+                os.path.join(utils.GlobalParams().base_dir, utils.GlobalParams().exp_name+".fa.sa")))
 
         return outputs
 
@@ -201,8 +205,8 @@ class ReferenceGenome(utils.MetaOutputHandler, luigi.WrapperTask):
 
     def requires(self):
         return {
-            'faidx' : FaidxIndex(reference_local_file=self.reference_local_file, from2bit=self.from2bit ,ref_url=self.ref_url), \
-            'bwa' : BwaIndex(reference_local_file=self.reference_local_file, from2bit=self.from2bit ,ref_url=self.ref_url), \
+            'faidx' : FaidxIndex(), \
+            'bwa' : BwaIndex(), \
             'fa' : GetReferenceFa(reference_local_file=self.reference_local_file, from2bit=self.from2bit ,ref_url=self.ref_url) \
             }
 

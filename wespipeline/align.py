@@ -58,7 +58,7 @@ class BwaAlignFastq(ExternalProgramTask):
 
         return args
 
-class FastqAlign(utils.MetaOutputHandler, luigi.WrapperTask):
+class FastqAlign(utils.MetaOutputHandler, luigi.Task):
     """Higher level task for the alignment of fastq files.
     
     It is given preference to local files over processing the alignment
@@ -85,10 +85,18 @@ class FastqAlign(utils.MetaOutputHandler, luigi.WrapperTask):
     cpus = luigi.Parameter(default='', description="Number of cpus to be used by each task thread.")
 
     def requires(self):
+        dependencies = dict()
+
         if self.sam_local_file != '':
-            return {'sam': utils.LocalFile(file_path=self.sam_local_file)}
+            dependencies.update({'sam': utils.LocalFile(file_path=self.sam_local_file)})
         else:
-            return {'sam' : BwaAlignFastq()}
+            dependencies.update({'sam' : BwaAlignFastq()})
+
+        return dependencies
+
+    def run(self)
+        # yield PostDependency()
+        pass
 
 if __name__ == '__main__':
     luigi.run(['FastqAlign', 

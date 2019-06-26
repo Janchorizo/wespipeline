@@ -165,40 +165,42 @@ class GetFastq(utils.MetaOutputHandler, luigi.Task):
         if self.accession_number != '' and self.fastq1_local_file == '' and self.fastq1_local_file == '':
             return SraToolkitFastq(accession_number=self.accession_number, paired_end=self.paired_end)
 
+        dependencies = dict()
+
         if self.compressed.lower() == 'true':
             if self.fastq1_local_file != '':
-                dependencies = {'fastq1' : UncompressFastqgz(
+                dependencies.update({'fastq1' : UncompressFastqgz(
                         fastq_local_file=self.fastq1_local_file, 
                         fastq_url=self.fastq1_url, 
-                        output_file='.'.join(self.fastq1_local_file.split('.')[:-1]))}
+                        output_file='.'.join(self.fastq1_local_file.split('.')[:-1]))})
             else: 
-                dependencies = {'fastq1' : UncompressFastqgz(
+                dependencies.update({'fastq1' : UncompressFastqgz(
                         fastq_local_file=self.fastq1_local_file, 
                         fastq_url=self.fastq1_url, 
-                        output_file=path.join(utils.GlobalParams().base_dir, 'hg19_1.fastq'))}
+                        output_file=path.join(utils.GlobalParams().base_dir, 'hg19_1.fastq'))})
         else:
             if self.fastq1_local_file != '':
-                dependencies = {'fastq1' : utils.LocalFile(file=self.fastq1_local_file)}
+                dependencies.update({'fastq1' : utils.LocalFile(file=self.fastq1_local_file)})
             else:
-                dependencies = {'fastq1' : utils.Wget(url=self.fastq1_url, output_file=path.join(utils.GlobalParams().base_dir, 'hg19_1.fastq'))}
+                dependencies.update({'fastq1' : utils.Wget(url=self.fastq1_url, output_file=path.join(utils.GlobalParams().base_dir, 'hg19_1.fastq'))})
 
         if self.paired_end.lower() == 'true':
             if self.compressed.lower() == 'true':
                 if self.fastq2_local_file != '':
-                    dependencies = {'fastq2' : UncompressFastqgz(
+                    dependencies.update({'fastq2' : UncompressFastqgz(
                             fastq_local_file=self.fastq2_local_file, 
                             fastq_url=self.fastq2_url, 
-                            output_file='.'.join(self.fastq2_local_file.split('.')[:-1]))}
+                            output_file='.'.join(self.fastq2_local_file.split('.')[:-1]))})
                 else: 
-                    dependencies = {'fastq2' : UncompressFastqgz(
+                    dependencies.update({'fastq2' : UncompressFastqgz(
                             fastq_local_file=self.fastq2_local_file, 
                             fastq_url=self.fastq2_url, 
-                            output_file=path.join(utils.GlobalParams().base_dir, 'hg19_1.fastq'))}
+                            output_file=path.join(utils.GlobalParams().base_dir, 'hg19_1.fastq'))})
             else:
                 if self.fastq2_local_file != '':
-                    dependencies = {'fastq2' : utils.LocalFile(file=self.fastq2_local_file)}
+                    dependencies.update({'fastq2' : utils.LocalFile(file=self.fastq2_local_file)})
                 else:
-                    dependencies = {'fastq2' : utils.Wget(url=self.fastq2_url, output_file=path.join(utils.GlobalParams().base_dir, 'hg19_1.fastq'))}
+                    dependencies.update({'fastq2' : utils.Wget(url=self.fastq2_url, output_file=path.join(utils.GlobalParams().base_dir, 'hg19_1.fastq'))})
 
         return dependencies
 

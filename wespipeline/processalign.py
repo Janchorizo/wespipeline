@@ -117,7 +117,7 @@ class IndexNoDup(ExternalProgramTask):
     def program_args(self):
         return ['samtools', 'index', '-@', AlignProcessing().cpus, self.input()['bam'].path]
 
-class AlignProcessing(utils.MetaOutputHandler, luigi.WrapperTask):
+class AlignProcessing(utils.MetaOutputHandler, luigi.Task):
     """Higher level task for the alignment of fastq files.
     
     It is given preference to local files over processing the alignment
@@ -160,28 +160,29 @@ class AlignProcessing(utils.MetaOutputHandler, luigi.WrapperTask):
     no_dup_bai_local_file = luigi.Parameter(default='', description='Optional path for the file. If set, wil be skipped.')
 
     def requires(self):
+        dependencies = dict()
+
         if self.no_dup_bam_local_file != '' and self.no_dup_bai_local_file != '':
-            bam = utils.LocalFile(file=self.no_dup_bam_local_file)
-            bai = utils.LocalFile(file=self.no_dup_bai_local_file)
-            bamNoDup = utils.LocalFile(file=self.no_dup_bam_local_file)
-            baiNoDup = utils.LocalFile(file=self.no_dup_bai_local_file)
+            dependencies.update({'bam': utils.LocalFile(file=self.no_dup_bam_local_file)})
+            dependencies.update({'bai': utils.LocalFile(file=self.no_dup_bai_local_file)})
+            dependencies.update({'bamNoDup': utils.LocalFile(file=self.no_dup_bam_local_file)})
+            dependencies.update({'baiNoDup': utils.LocalFile(file=self.no_dup_bai_local_file)})
         else:
-            bamNoDup = Picardmarkduplicates()
-            baiNoDup = IndexBam()
+            dependencies.update({'bamNoDup': Picardmarkduplicates()})
+            dependencies.update({'baiNoDup': IndexBam()})
 
         if self.bam_local_file != '' and self.bai_local_file != '':
-            bam = utils.LocalFile(file=self.bam_local_file)
-            bai = utils.LocalFile(file=self.bai_local_file)
+            dependencies.update({'bam': utils.LocalFile(file=self.bam_local_file)})
+            dependencies.update({'bai': utils.LocalFile(file=self.bai_local_file)})
         else:
-            bam = SortSam()
-            bai = IndexBam()
+            dependencies.update({'bam': SortSam()})
+            dependencies.update({'bai': IndexBam()})
 
-        return {
-            'bam' : bam,
-            'bai' : bai,
-            'bamNoDup' : bamNoDup,
-            'indexNoDup' : baiNoDup
-            }
+        return dependencies
+
+    def run(self)
+        # yield PostDependency()
+        pass
 
 if __name__ == '__main__':
     luigi.run(['AlignProcessing', 

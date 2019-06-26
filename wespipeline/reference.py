@@ -173,7 +173,7 @@ class BwaIndex(ExternalProgramTask):
     def program_args(self):
         return ['bwa', 'index', self.input().path]
 
-class ReferenceGenome(utils.MetaOutputHandler, luigi.WrapperTask):
+class ReferenceGenome(utils.MetaOutputHandler, luigi.Task):
     """Higher level task for retrieving the reference genome.
     
     It is given preference to local files over downloading the reference. However the 
@@ -204,11 +204,17 @@ class ReferenceGenome(utils.MetaOutputHandler, luigi.WrapperTask):
     from2bit = luigi.Parameter(default='false', description="A boolean [True, False] indicating whether the reference genome must be converted from 2bit. Defaultsto false.")
 
     def requires(self):
-        return {
-            'faidx' : FaidxIndex(), \
-            'bwa' : BwaIndex(), \
-            'fa' : GetReferenceFa(reference_local_file=self.reference_local_file, from2bit=self.from2bit ,ref_url=self.ref_url) \
-            }
+        dependencies = dict()
+
+        dependencies.update({'faidx' : FaidxIndex()})
+        dependencies.update({'bwa' : BwaIndex()})
+        dependencies.update({'fa' : GetReferenceFa(reference_local_file=self.reference_local_file, from2bit=self.from2bit ,ref_url=self.ref_url)})
+
+        return dependencies
+
+    def run(self)
+        # yield PostDependency()
+        pass
 
 if __name__ == '__main__':
     luigi.run(['ReferenceGenome', 

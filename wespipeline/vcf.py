@@ -211,7 +211,7 @@ class DeepvariantCallVariants(DockerTask):
         return outputs if self.create_gvcf == True else outputs[0]
 
 
-class VariantCalling(utils.MetaOutputHandler, luigi.WrapperTask):
+class VariantCalling(utils.MetaOutputHandler, luigi.Task):
     """Higher level task for the alignment of fastq files.
     
     It is given preference to local files over processing the alignment
@@ -276,6 +276,9 @@ class VariantCalling(utils.MetaOutputHandler, luigi.WrapperTask):
 
         return dependencies
 
+    def run(self)
+        # yield PostDependency()
+        pass
 
 if __name__ == '__main__':
     luigi.run(['VariantCalling', 

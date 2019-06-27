@@ -1,10 +1,12 @@
 import itertools
 import luigi
 from luigi.contrib.external_program import ExternalProgramTask
+from luigi.contrib.docker_runner import DockerTask
 from os import path
 from wespipeline import utils 
 
 from wespipeline.vcf import VariantCalling
+from wespipeline.reference import ReferenceGenome
 
 class VcftoolsCompare(ExternalProgramTask):
     """Task used for comparing a pair of vcf files using VcfTools.
@@ -76,6 +78,65 @@ class VcftoolsAnalysis(ExternalProgramTask):
             self.output().path
         ]
 
+class VTnormalizeVCF(DockerTask)
+
+
+    VERSION = "0.57721--hdf88d34_2"
+
+    vcf = luigi.Parameter()
+    output = luigi.Parameter()
+
+    biallelic_block_substitutions = luigi.BoolParameter(parsing=luigi.BoolParameter.EXPLICIT_PARSING)
+    biallelic_clumped_variant = luigi.BoolParameter(parsing=luigi.BoolParameter.EXPLICIT_PARSING)
+    biallelic_block_substitutions = luigi.BoolParameter(parsing=luigi.BoolParameter.EXPLICIT_PARSING)
+    decomposes_multiallelic_variants = luigi.BoolParameter(parsing=luigi.BoolParameter.EXPLICIT_PARSING,
+        description='decomposes multiallelic variants into biallelic variants')
+
+    def requires(self):
+        return ReferenceGenome()
+
+    def output(self):
+        return luigi.LocalTarget(self.output)
+
+    @property
+    def image(self):
+        return f'quay.io/biocontainers/vt:{self.VERSION}'
+
+    @property
+    def binds(self):
+        return [f"{os.path.dirname(os.path.abspath(self.input().path))}:/input/ref",
+                f"{os.path.dirname(os.path.abspath(self.vcf))}:/input/vcf",
+                f"{os.path.dirname(os.path.abspath(self.output))}:/output",
+                ]
+
+    @property
+    def mount_tmp(self):
+        return False
+
+    @property
+    def command(self):
+        vt normalize dbsnp.vcf -r seq.fa -o dbsnp.normalized.vcf
+        command = 'vt normalize ' + \
+            f'/input/vcf/{os.path.basename(self.vcf)} ' + \
+            f'-r /input/ref/{os.path.basename(self.input().path)} ' + \
+            f'-o /output/{os.path.basename(self.output)} ' + \
+
+        return command
+
+
+class NormalizeVcfFiles(utils.MetaOutput, luigi.WrapperTask):
+    """docstring for NormalizeVcfFiles"""
+    
+    def requires(self):
+        VariantCalling()
+
+    def output(self):
+        {vcf:luigi.LocalTarget(vcf.replace('.vcf','_normalized.vcf')) for vcf in self.input().keys()}
+
+    def run(self):
+        yield {entry[0]:VTnormalizeVCF(vfc=entry[1].path, output=self.output()[entry[0]].path) for entry in self.input().items()}
+        
+
 class VariantCallingAnalysis(luigi.Task):
     """Higher level task for comparing variant calls.
     
@@ -94,8 +155,11 @@ class VariantCallingAnalysis(luigi.Task):
 
     """
 
+    normalize = luigi.BoolParameter(parsing=luigi.BoolParameter.EXPLICIT_PARSING, 
+        description="A boolean indicating wether to normalize vcf files prior to analysis")
+
     def requires(self):
-        return VariantCalling()
+        return NormalizeVcfFiles() if self.normalize == True else VariantCalling()
 
     def outputs(self):
         output = [vcf.path.replace('.vcf','vcf_info') for vcf in self.input().values()]

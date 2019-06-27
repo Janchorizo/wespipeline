@@ -110,8 +110,8 @@ class UncompressFile(ExternalProgramTask):
     input_file = luigi.Parameter(description='(str): Absolute path to the compressed file.')
     output_file = luigi.Parameter(description='(str): Absolute path to the'
         +' desired final location.')
-    copy = luigi.Parameter(default='false', description='(bool): Non case sensitive'
-        + 'boolean indicating wether to copy or to move the file. Defaults to false.')
+    copy = luigi.BoolParameter(parsing=luigi.BoolParameter.EXPLICIT_PARSING, 
+        description='(bool): A boolean indicating wether to copy or to move the file. Defaults to false.')
 
     def requires(self):
         return GunzipFile(self.input_file)
@@ -121,7 +121,7 @@ class UncompressFile(ExternalProgramTask):
 
     def program_args(self):
         if os.path.isfile(self.input().path):
-            command = 'cp' if self.copy.lower() == 'true' else 'mv'
+            command = 'cp' if self.copy == True else 'mv'
 
             if os.path.abspath(self.input().path) != os.path.abspath(self.output_file):
                 return [command, self.input().path, self.output_file]

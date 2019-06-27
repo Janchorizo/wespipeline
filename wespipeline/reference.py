@@ -92,10 +92,10 @@ class GetReferenceFa(utils.MetaOutputHandler, luigi.WrapperTask):
 
     reference_local_file = luigi.Parameter(default='')
     ref_url = luigi.Parameter(default='')
-    from2bit = luigi.Parameter(default='false')
+    from2bit = luigi.BoolParameter()
 
     def requires(self):
-        if self.from2bit.lower() == 'true':
+        if self.from2bit == True:
             dependency = TwoBitToFa(reference_local_file=self.reference_local_file ,ref_url=self.ref_url) 
         else:
             if self.reference_local_file != '':
@@ -199,9 +199,14 @@ class ReferenceGenome(utils.MetaOutputHandler, luigi.Task):
 
     """
 
-    reference_local_file = luigi.Parameter(default='',description='Optional string indicating the location for the reference genome. If set, it will not be downloaded.')
-    ref_url = luigi.Parameter(default='', description="Url for the download of the reference genome.")
-    from2bit = luigi.Parameter(default='false', description="A boolean [True, False] indicating whether the reference genome must be converted from 2bit. Defaultsto false.")
+    reference_local_file = luigi.Parameter(default='',
+        description='Optional string indicating the location for the reference genome. If set, it will not be downloaded.')
+
+    ref_url = luigi.Parameter(default='', 
+        description="Url for the download of the reference genome.")
+
+    from2bit = luigi.BoolParameter(parsing=luigi.BoolParameter.EXPLICIT_PARSING, 
+        description="A boolean indicating whether the reference genome must be converted from 2bit. Defaults to false.")
 
     def requires(self):
         dependencies = dict()

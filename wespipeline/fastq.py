@@ -56,11 +56,11 @@ class SraToolkitFastq(ExternalProgramTask):
     """
 
     accession_number = luigi.Parameter()
-    paired_end = luigi.Parameter()
+    paired_end = luigi.BoolParameter()
 
     def output(self):
         output_files = {'fastq1' : luigi.LocalTarget(self.accession_number + '.fastq')}
-        if self.paired_end.lower() == 'true':
+        if self.paired_end == True:
             output_files = {'fastq1' : luigi.LocalTarget(self.accession_number + '_1.fastq'),
                 'fastq2' : luigi.LocalTarget(self.accession_number + '_2.fastq')}
 
@@ -69,7 +69,7 @@ class SraToolkitFastq(ExternalProgramTask):
     def program_args(self):
         command = ['fastq-dump']
 
-        if self.paired_end.lower() == 'true':
+        if self.paired_end == True:
             command.append('--split-files')
 
         command.append(self.accession_number)
@@ -157,9 +157,14 @@ class GetFastq(utils.MetaOutputHandler, luigi.Task):
 
     accession_number = luigi.Parameter(default='', description="Optional string indicating the EBI accession number for retrieving the experiment.")
 
-    paired_end = luigi.Parameter(default='false', description="A non case-sensitive boolean indicating wether the experimwnt is paired ended or not.")
-    compressed = luigi.Parameter(default='false', description="A non case-sensitive boolean indicating wether the provided files are compressed or not.")
-    create_report = luigi.Parameter(default='false', description="A non case-sensitive boolean indicating wether to create a quality check report.")
+    paired_end = luigi.BoolParameter(parsing=luigi.BoolParameter.EXPLICIT_PARSING, 
+        description="A boolean indicating wether the experimwnt is paired ended or not.")
+
+    compressed = luigi.BoolParameter(parsing=luigi.BoolParameter.EXPLICIT_PARSING, 
+        description="A boolean indicating wether the provided files are compressed or not.")
+
+    create_report = luigi.BoolParameter(parsing=luigi.BoolParameter.EXPLICIT_PARSING, 
+        description="A boolean indicating wether to create a quality check report.")
 
     def requires(self):
         if self.accession_number != '' and self.fastq1_local_file == '' and self.fastq1_local_file == '':
@@ -167,7 +172,7 @@ class GetFastq(utils.MetaOutputHandler, luigi.Task):
 
         dependencies = dict()
 
-        if self.compressed.lower() == 'true':
+        if self.compressed == True:
             if self.fastq1_local_file != '':
                 dependencies.update({'fastq1' : UncompressFastqgz(
                         fastq_local_file=self.fastq1_local_file, 
@@ -184,8 +189,8 @@ class GetFastq(utils.MetaOutputHandler, luigi.Task):
             else:
                 dependencies.update({'fastq1' : utils.Wget(url=self.fastq1_url, output_file=path.join(utils.GlobalParams().base_dir, 'hg19_1.fastq'))})
 
-        if self.paired_end.lower() == 'true':
-            if self.compressed.lower() == 'true':
+        if self.paired_end == True:
+            if self.compressed.lower() == True:
                 if self.fastq2_local_file != '':
                     dependencies.update({'fastq2' : UncompressFastqgz(
                             fastq_local_file=self.fastq2_local_file, 
@@ -205,9 +210,9 @@ class GetFastq(utils.MetaOutputHandler, luigi.Task):
         return dependencies
 
     def run(self):
-        if self.create_report.lower() == 'true':
+        if self.create_report == True:
             report = [FastqcQualityCheck(fastq_file=self.input()['fastq1'].path)]
-            if self.paired_end.lower() == 'true':
+            if self.paired_end == True:
                 report.append(FastqcQualityCheck(fastq_file=self.input()['fastq2'].path))
 
             yield report

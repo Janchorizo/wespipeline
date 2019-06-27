@@ -151,7 +151,7 @@ class GatkCallVariants(ExternalProgramTask):
             self.output().path
         ]
 
-class DeepvariantCallVariants(DockerTask):
+class DeepvariantDockerTask(DockerTask):
     """Task used for identifying varinats in the bam file provided using DeepVariant.
 
     Parameters:
@@ -205,10 +205,38 @@ class DeepvariantCallVariants(DockerTask):
         return command
 
     def output(self):
-        outputs = [luigi.LocalTarget(os.path.join(utils.GlobalParams().base_dir, 'deepvariant.vcf.gz')),
-            luigi.LocalTarget(os.path.join(utils.GlobalParams().base_dir, 'deepvariant.vcf.gz'))]
+        outputs = dict()
 
-        return outputs if self.create_gvcf == True else outputs[0]
+        outputs.update({'vcf': luigi.LocalTarget(os.path.join(utils.GlobalParams().base_dir, 'deepvariant.vcf.gz'))})
+        
+        if self.create_gvcf == True:
+            outputs.update({'gvcf': luigi.LocalTarget(os.path.join(utils.GlobalParams().base_dir, 'deepvariant.gvcf.gz'))})
+
+        return outputs
+
+class DeepvariantCallVariants(ExternalProgramTask):
+    """Task used for identifying varinats in the bam file provided using DeepVariant.
+
+    Parameters:
+        model_type (str): A string defining the model to use for the variant calling. Valid options are [WGS,WES,PACBIO].
+
+    Dependencies:
+        ReferenceGenome
+        AlignProcessing
+
+    Output:
+        A `luigi.LocalTarget` instance for the index vcf file.
+
+    """
+
+    def requires(self):
+        return DeepvariantDockerTask()
+
+    def output(self):
+        return luigi.LocalTarget(os.path.join(utils.GlobalParams().base_dir,'deepvariant.vcf'))
+
+    def program_args(self):
+        return ['gunzip',self.input()["vcf"].path]
 
 
 class VariantCalling(utils.MetaOutputHandler, luigi.Task):
@@ -276,7 +304,7 @@ class VariantCalling(utils.MetaOutputHandler, luigi.Task):
 
         return dependencies
 
-    def run(self)
+    def run(self):
         # yield PostDependency()
         pass
 

@@ -34,7 +34,8 @@ class VcftoolsCompare(ExternalProgramTask):
 
         return luigi.LocalTarget(
             path.join(utils.GlobalParams().base_dir,
-            ''.join([filename(self.vcf1), '_vs_', filename(self.vcf2)])))
+            ''.join([filename(self.vcf1), '_vs_', filename(self.vcf2)]) +'.diff.sites_in_files'
+            ))
 
     def program_args(self):
         return ['vcftools',
@@ -42,13 +43,12 @@ class VcftoolsCompare(ExternalProgramTask):
             self.vcf1,
             '--diff',
             self.vcf2,
-            '--not-chr',
             '--diff-site',
             '--out',
             self.output().path
         ]
 
-class VcftoolsAnalysis(ExternalProgramTask):
+class VcftoolsDepthAnalysis(ExternalProgramTask):
     """Task used for extracting basic statistics for the variant calls using VcfTools.
 
     Parameters:
@@ -68,17 +68,37 @@ class VcftoolsAnalysis(ExternalProgramTask):
         return None
 
     def output(self):
-        return luigi.LocalTarget(self.vcf.replace('.vcf', '.vcf_info'))
+        return luigi.LocalTarget(self.vcf.replace('.vcf', '_depth_info.txt'))
 
     def program_args(self):
-        return ['vcftools',
-            '--vcf',
-            self.vcf,
-            '--out',
-            self.output().path
-        ]
+        return ['sh','-c',f'vcftools --vcf {self.vcf} --depth -c > {self.output().path}']
 
-class VTnormalizeVCF(DockerTask)
+class VcftoolsFreqAnalysis(ExternalProgramTask):
+    """Task used for extracting basic statistics for the variant calls using VcfTools.
+
+    Parameters:
+        vcf (str): Absolute path to the file with the variant annotations.
+
+    Dependencies:
+        None
+
+    Output:
+        A `luigi.LocalTarget` instance for the file with the vcf statistics.
+
+    """
+
+    vcf = luigi.Parameter()
+
+    def requires(self):
+        return None
+
+    def output(self):
+        return luigi.LocalTarget(self.vcf.replace('.vcf', '_freq_info.txt'))
+
+    def program_args(self):
+        return ['sh','-c',f'vcftools --vcf {self.vcf} --freq > {self.output().path}']
+
+class DockerVTnormalizeVCF(DockerTask):
 
 
     VERSION = "0.57721--hdf88d34_2"
@@ -115,26 +135,45 @@ class VTnormalizeVCF(DockerTask)
 
     @property
     def command(self):
-        vt normalize dbsnp.vcf -r seq.fa -o dbsnp.normalized.vcf
         command = 'vt normalize ' + \
             f'/input/vcf/{os.path.basename(self.vcf)} ' + \
             f'-r /input/ref/{os.path.basename(self.input().path)} ' + \
-            f'-o /output/{os.path.basename(self.output)} ' + \
+            f'-o /output/{os.path.basename(self.output)} ' 
+
+        return command
+
+class VTnormalizeVCF(ExternalProgramTask):
+
+    vcf = luigi.Parameter()
+    out = luigi.Parameter()
+
+    def requires(self):
+        return ReferenceGenome()
+
+    def output(self):
+        return luigi.LocalTarget(self.out)
+
+    def program_args(self):
+        command = ['vt', 'normalize', self.vcf, '-r', self.input()["fa"].path, '-o', self.out] 
+
+        print(command)
 
         return command
 
 
-class NormalizeVcfFiles(utils.MetaOutput, luigi.WrapperTask):
+class NormalizeVcfFiles(utils.MetaOutputHandler, luigi.Task):
     """docstring for NormalizeVcfFiles"""
     
     def requires(self):
-        VariantCalling()
+        return VariantCalling()
 
     def output(self):
-        {vcf:luigi.LocalTarget(vcf.replace('.vcf','_normalized.vcf')) for vcf in self.input().keys()}
+        
+        output = {vcf[0]:luigi.LocalTarget(vcf[1].path.replace('.vcf','_normalized.vcf')) for vcf in self.input().items()}
+        return output
 
     def run(self):
-        yield {entry[0]:VTnormalizeVCF(vfc=entry[1].path, output=self.output()[entry[0]].path) for entry in self.input().items()}
+        yield {entry[0]:VTnormalizeVCF(vcf=entry[1].path, out=self.output()[entry[0]].path) for entry in self.input().items()}
         
 
 class VariantCallingAnalysis(luigi.Task):
@@ -161,13 +200,14 @@ class VariantCallingAnalysis(luigi.Task):
     def requires(self):
         return NormalizeVcfFiles() if self.normalize == True else VariantCalling()
 
-    def outputs(self):
-        output = [vcf.path.replace('.vcf','vcf_info') for vcf in self.input().values()]
-
+    def output(self):
+        print(self.input(), list(map(lambda x:x.path, self.input().values())))
+        output = [luigi.LocalTarget(vcf.path.replace('.vcf','vcf_info')) for vcf in self.input().values()]
         return output
 
     def run(self):
-        yield((VcftoolsAnalysis(vcf=vcf.path) for vcf in self.input().values()))
+        yield((VcftoolsDepthAnalysis(vcf=vcf.path) for vcf in self.input().values()))
+        yield((VcftoolsFreqAnalysis(vcf=vcf.path) for vcf in self.input().values()))
         if len(self.input()) > 1:
             yield((VcftoolsCompare(vcf1=vcf1.path, vcf2=vcf2.path) \
                 for vcf1,vcf2 in itertools.combinations(self.input().values(),2)))

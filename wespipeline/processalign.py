@@ -180,7 +180,7 @@ class AlignProcessing(utils.MetaOutputHandler, luigi.Task):
 
         return dependencies
 
-    def run(self)
+    def run(self):
         # yield PostDependency()
         pass
 

@@ -106,6 +106,28 @@ class GetReferenceFa(utils.MetaOutputHandler, luigi.WrapperTask):
 
         return dependency
 
+class PicardDict(ExternalProgramTask):
+    """Task user for creating a dict file with the reference genome .fa file with the picard utility.
+
+    Parameters:
+        None
+
+    Output:
+        A `luigi.LocalTarget` for the .fai index file for the reference genome .  
+    
+    """
+
+    def requires(self): 
+        return GetReferenceFa(reference_local_file=ReferenceGenome().reference_local_file,
+                from2bit=ReferenceGenome().from2bit ,
+                ref_url=ReferenceGenome().ref_url)
+
+    def output(self):
+        return luigi.LocalTarget(self.input().path.replace('.fa','.dict'))
+
+    def program_args(self):
+        return ['picard', 'CreateSequenceDictionary', f'R={self.input().path}']
+
 class FaidxIndex(ExternalProgramTask):
     """Task user for indexing the reference genome .fa file with the samtools faidx utility.
 
@@ -213,6 +235,7 @@ class ReferenceGenome(utils.MetaOutputHandler, luigi.Task):
 
         dependencies.update({'faidx' : FaidxIndex()})
         dependencies.update({'bwa' : BwaIndex()})
+        dependencies.update({'dict' : PicardDict()})
         dependencies.update({'fa' : GetReferenceFa(reference_local_file=self.reference_local_file, from2bit=self.from2bit ,ref_url=self.ref_url)})
 
         return dependencies

@@ -38,6 +38,9 @@ class VcftoolsCompare(ExternalProgramTask):
             ))
 
     def program_args(self):
+        filename = lambda f: path.split(f)[-1].split('.')[0]
+        output_filename = path.join(utils.GlobalParams().base_dir, \
+            ''.join([filename(self.vcf1), '_vs_', filename(self.vcf2)]))
         return ['vcftools',
             '--vcf',
             self.vcf1,
@@ -45,7 +48,7 @@ class VcftoolsCompare(ExternalProgramTask):
             self.vcf2,
             '--diff-site',
             '--out',
-            self.output().path
+            output_filename
         ]
 
 class VcftoolsDepthAnalysis(ExternalProgramTask):
@@ -154,7 +157,8 @@ class VTnormalizeVCF(ExternalProgramTask):
         return luigi.LocalTarget(self.out)
 
     def program_args(self):
-        command = ['vt', 'normalize', self.vcf, '-r', self.input()["fa"].path, '-o', self.out] 
+        command = ['sh', '-c',
+        'vt normalize -r '+self.input()['fa'].path+' -o '+self.out+'_tmp.vcf '+self.vcf+' && picard SortVcf SEQUENCE_DICTIONARY='+self.input()['dict'].path+' O='+self.out+' I='+self.out+'_tmp.vcf && rm '+self.out+'_tmp.vcf']
 
         print(command)
 
@@ -201,7 +205,6 @@ class VariantCallingAnalysis(luigi.Task):
         return NormalizeVcfFiles() if self.normalize == True else VariantCalling()
 
     def output(self):
-        print(self.input(), list(map(lambda x:x.path, self.input().values())))
         output = [luigi.LocalTarget(vcf.path.replace('.vcf','vcf_info')) for vcf in self.input().values()]
         return output
 

@@ -79,8 +79,8 @@ class FreebayesCallVariants(ExternalProgramTask):
             '--vcf', self.output().path
         ]
 
-class SamtoolsCallVariants(ExternalProgramTask):
-    """Task used for identifying varinats in the bam file provided using Samtools.
+class VarscanCallVariants(ExternalProgramTask):
+    """Task used for identifying varinats in the bam file provided using Varscan..
 
     The ``wespipeline.utils.GlobalParams.exp_name`` will be used for giving name
     to the vcf produced.
@@ -106,13 +106,15 @@ class SamtoolsCallVariants(ExternalProgramTask):
     def output(self):
         return luigi.LocalTarget(
             os.path.join(utils.GlobalParams().base_dir,
-            utils.GlobalParams().exp_name+'_samtools.vcf'))
+            utils.GlobalParams().exp_name+'_varscan.vcf'))
 
     def program_args(self):
-        return [
-            self.input()['reference']['fa']['fa'].path,
-            self.input()['process']['bamNoDup']['bam'].path,
-            self.output().path
+        ref = self.input()['reference']['fa'].path
+        bam = self.input()['process']['bamNoDup'].path
+
+        return ['sh', 
+                '-c', 
+                f"samtools mpileup -f {ref} {bam} | varscan pileup2cns --output-vcf > {self.output().path}"
         ]
 
 class GatkCallVariants(ExternalProgramTask):
@@ -146,10 +148,66 @@ class GatkCallVariants(ExternalProgramTask):
 
     def program_args(self):
         return [
-            self.input()['reference']['fa']['fa'].path,
-            self.input()['process']['bamNoDup']['bam'].path,
-            self.output().path
+            'gatk', '-T', 'HaplotypeCaller',
+            '-R', self.input()['reference']['fa'].path,
+            '-I', self.input()['process']['bamNoDup'].path,
+            '-o', self.output().path
         ]
+
+class DockerGatkCallVariants(DockerTask):
+    """Task used for identifying varinats in the bam file provided using DeepVariant.
+
+    Parameters:
+        model_type (str): A string defining the model to use for the variant calling. Valid options are [WGS,WES,PACBIO].
+
+    Dependencies:
+        ReferenceGenome
+        AlignProcessing
+
+    Output:
+        A `luigi.LocalTarget` instance for the index vcf file.
+
+    """
+
+    model_type = luigi.Parameter(default='WES', description='A string defining the model to use for the variant calling. Valid options are [WGS,WES,PACBIO]')
+    BIN_VERSION = '0.8.0'
+
+    def requires(self):
+        return {
+            'reference' : ReferenceGenome(),
+            'process' : AlignProcessing()
+        }
+
+    @property
+    def image(self):
+        return f'broadinstitute/gatk'
+
+    @property
+    def binds(self):
+        return [f"{os.path.abspath(utils.GlobalParams().base_dir)}:/output",
+                f"{os.path.dirname(os.path.abspath(self.input()['reference']['fa'].path))}:/input/ref",
+                f"{os.path.dirname(os.path.abspath(self.input()['process']['bamNoDup'].path))}:/input/bam",
+                ]
+
+    @property
+    def mount_tmp(self):
+        return False
+
+    @property
+    def command(self): 
+        command = f'gatk HaplotypeCaller ' + \
+            f'-R /input/ref/{os.path.basename(self.input()["reference"]["fa"].path)} ' + \
+            f'-I /input/bam/{os.path.basename(self.input()["process"]["bamNoDup"].path)} ' + \
+            f'-O /output/{os.path.basename(self.output().path)} ' 
+
+        print(command)
+        return command
+
+    def output(self):
+        return luigi.LocalTarget(
+            os.path.join(utils.GlobalParams().base_dir,
+            utils.GlobalParams().exp_name+'_gatk.vcf'))
+
 
 class DeepvariantDockerTask(DockerTask):
     """Task used for identifying varinats in the bam file provided using DeepVariant.
@@ -266,7 +324,7 @@ class VariantCalling(utils.MetaOutputHandler, luigi.Task):
     
         'platypus' : Local file with the variant calls obtained using Platypus.
         'freebayes' : Local file with the variant calls obtained using Freevayes.
-        'samtools' : Local sorted file with variant calls obtained using Samtools.
+        'Varscan' : Local sorted file with variant calls obtained using Varscan.
         'gatk' : Local file with the variant calls obtained using GATK.
         'deepvariant' : Local file with the variant calls obtained using DeepVariant.
 
@@ -274,7 +332,7 @@ class VariantCalling(utils.MetaOutputHandler, luigi.Task):
 
     use_platypus = luigi.BoolParameter(parsing=luigi.BoolParameter.EXPLICIT_PARSING, description="A boolean indicating wether to create a vcf file using Platypus")
     use_freebayes = luigi.BoolParameter(parsing=luigi.BoolParameter.EXPLICIT_PARSING,description="A boolean indicating wether to create a vcf file using Freebayes")
-    use_samtools = luigi.BoolParameter(parsing=luigi.BoolParameter.EXPLICIT_PARSING,  description="A boolean indicating wether to create a vcf file using Samtools")
+    use_varscan = luigi.BoolParameter(parsing=luigi.BoolParameter.EXPLICIT_PARSING,  description="A boolean indicating wether to create a vcf file using Varscan")
     use_gatk = luigi.BoolParameter(parsing=luigi.BoolParameter.EXPLICIT_PARSING, description="A boolean indicating wether to create a vcf file using GATK")
     use_deepvariant = luigi.BoolParameter(parsing=luigi.BoolParameter.EXPLICIT_PARSING, description="A boolean indicating wether to create a vcf file using DeepVariant")
     cpus = luigi.IntParameter(default=1, description="Number of cpus that are available for each of the methods selected.")
@@ -293,11 +351,11 @@ class VariantCalling(utils.MetaOutputHandler, luigi.Task):
             if self.use_freebayes == True:
                 dependencies.update({'freebayes': FreebayesCallVariants()})
 
-            if self.use_samtools == True:
-                dependencies.update({'samtools': SamtoolsCallVariants()})
+            if self.use_varscan == True:
+                dependencies.update({'varscan': VarscanCallVariants()})
 
             if self.use_gatk == True:
-                dependencies.update({'gatk': GatkCallVariants()})
+                dependencies.update({'gatk': DockerGatkCallVariants()})
 
             if self.use_deepvariant == True:
                 dependencies.update({'deepvariant': DeepvariantCallVariants()})

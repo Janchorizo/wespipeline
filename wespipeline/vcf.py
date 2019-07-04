@@ -110,7 +110,7 @@ class VarscanCallVariants(ExternalProgramTask):
 
     def program_args(self):
         ref = self.input()['reference']['fa'].path
-        bam = self.input()['process']['bamNoDup'].path
+        bam = self.input()['process']['bamNoDup']['bam'].path
 
         return ['sh', 
                 '-c', 
@@ -150,7 +150,7 @@ class GatkCallVariants(ExternalProgramTask):
         return [
             'gatk', '-T', 'HaplotypeCaller',
             '-R', self.input()['reference']['fa'].path,
-            '-I', self.input()['process']['bamNoDup'].path,
+            '-I', self.input()['process']['bamNoDup']['bam'].path,
             '-o', self.output().path
         ]
 
@@ -186,7 +186,7 @@ class DockerGatkCallVariants(DockerTask):
     def binds(self):
         return [f"{os.path.abspath(utils.GlobalParams().base_dir)}:/output",
                 f"{os.path.dirname(os.path.abspath(self.input()['reference']['fa'].path))}:/input/ref",
-                f"{os.path.dirname(os.path.abspath(self.input()['process']['bamNoDup'].path))}:/input/bam",
+                f"{os.path.dirname(os.path.abspath(self.input()['process']['bamNoDup']['bam'].path))}:/input/bam",
                 ]
 
     @property
@@ -197,7 +197,7 @@ class DockerGatkCallVariants(DockerTask):
     def command(self): 
         command = f'gatk HaplotypeCaller ' + \
             f'-R /input/ref/{os.path.basename(self.input()["reference"]["fa"].path)} ' + \
-            f'-I /input/bam/{os.path.basename(self.input()["process"]["bamNoDup"].path)} ' + \
+            f'-I /input/bam/{os.path.basename(self.input()["process"]["bamNoDup"]["bam"].path)} ' + \
             f'-O /output/{os.path.basename(self.output().path)} ' 
 
         print(command)
@@ -242,7 +242,7 @@ class DeepvariantDockerTask(DockerTask):
     def binds(self):
         return [f"{os.path.abspath(utils.GlobalParams().base_dir)}:/output",
                 f"{os.path.dirname(os.path.abspath(self.input()['reference']['fa'].path))}:/input/ref",
-                f"{os.path.dirname(os.path.abspath(self.input()['process']['bamNoDup'].path))}:/input/bam",
+                f"{os.path.dirname(os.path.abspath(self.input()['process']['bamNoDup']['bam'].path))}:/input/bam",
                 ]
 
     @property
@@ -254,7 +254,7 @@ class DeepvariantDockerTask(DockerTask):
         command = '/opt/deepvariant/bin/run_deepvariant ' + \
             f'--model_type={self.model_type} ' + \
             f'--ref=/input/ref/{os.path.basename(self.input()["reference"]["fa"].path)} ' + \
-            f'--reads=/input/bam/{os.path.basename(self.input()["process"]["bamNoDup"].path)} ' + \
+            f'--reads=/input/bam/{os.path.basename(self.input()["process"]["bamNoDup"]["bam"].path)} ' + \
             f'--output_vcf=/output/deepvariant.vcf.gz ' + \
             (f'--output_gvcf=/output/deepvariant.g.vcf.gz ' if self.create_gvcf == True else '') + \
             f'--num_shards={VariantCalling().cpus}'

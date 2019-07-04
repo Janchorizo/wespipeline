@@ -41,15 +41,13 @@ class VcftoolsCompare(ExternalProgramTask):
         filename = lambda f: path.split(f)[-1].split('.')[0]
         output_filename = path.join(utils.GlobalParams().base_dir, \
             ''.join([filename(self.vcf1), '_vs_', filename(self.vcf2)]))
-        return ['vcftools',
-            '--vcf',
-            self.vcf1,
-            '--diff',
-            self.vcf2,
-            '--diff-site',
-            '--out',
-            output_filename
-        ]
+
+        return ['bash', '-c', \
+            f"vcftools --vcf {self.vcf2} --diff {self.vcf1} --diff-site " + \
+            "--chr chr1 --chr chr2 --chr chr3 --chr chr4 --chr chr5 --chr chr6 " + \
+            "--chr chr7 --chr chr8 --chr chr9 --chr chr10 --chr chr11 --chr chr12 " + \
+            "--chr chr13 --chr chr14 --chr chr15 --chr chr16 --chr chr17 --chr chr18 " + \
+            f"--chr chr20 --chr chr21 --chr chr22 --chr chrX --chr chrY --out {output_filename} 2> {output_filename}.log" ]
 
 class VcftoolsDepthAnalysis(ExternalProgramTask):
     """Task used for extracting basic statistics for the variant calls using VcfTools.

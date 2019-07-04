@@ -165,11 +165,11 @@ class AlignProcessing(utils.MetaOutputHandler, luigi.Task):
         if self.no_dup_bam_local_file != '' and self.no_dup_bai_local_file != '':
             dependencies.update({'bam': utils.LocalFile(file=self.no_dup_bam_local_file)})
             dependencies.update({'bai': utils.LocalFile(file=self.no_dup_bai_local_file)})
-            dependencies.update({'bamNoDup': utils.LocalFile(file=self.no_dup_bam_local_file)})
+            dependencies.update({'bamNoDup': {'bam' : utils.LocalFile(file=self.no_dup_bam_local_file)}})
             dependencies.update({'baiNoDup': utils.LocalFile(file=self.no_dup_bai_local_file)})
         else:
-            dependencies.update({'bamNoDup': Picardmarkduplicates()})
-            dependencies.update({'baiNoDup': IndexBam()})
+            dependencies.update({'bamNoDup': PicardMarkDuplicates()})
+            dependencies.update({'baiNoDup': IndexNoDup()})
 
         if self.bam_local_file != '' and self.bai_local_file != '':
             dependencies.update({'bam': utils.LocalFile(file=self.bam_local_file)})

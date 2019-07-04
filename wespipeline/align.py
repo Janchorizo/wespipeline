@@ -1,6 +1,6 @@
 import luigi
 from luigi.contrib.external_program import ExternalProgramTask
-from os import path
+import os
 from wespipeline import utils 
 
 from wespipeline.reference import ReferenceGenome
@@ -32,10 +32,10 @@ class BwaAlignFastq(ExternalProgramTask):
 
     def output(self):
         get_name = lambda x: os.path.splitext(os.path.basename(os.path.realpath(x)))[0]
-        output_filename = get_name(self.input['fastq']['fastq1'].path) + '.sam'
+        output_filename = get_name(self.input()['fastq']['fastq1'].path) + '.sam'
 
         if utils.GlobalParams().exp_name:
-            output_filename = path.join(utils.GlobalParams().base_dir, utils.GlobalParams().exp_name+".sam")
+            output_filename = os.path.join(utils.GlobalParams().base_dir, utils.GlobalParams().exp_name+".sam")
         
         return luigi.LocalTarget(output_filename)
 

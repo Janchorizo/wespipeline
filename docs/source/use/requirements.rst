@@ -142,6 +142,7 @@ Installing all dependencies with a single command:
        conda install -y varscan && \
        conda install -y freebayes && \
        conda install -y vcftools && \
+       conda install -y gatk && \
        conda install -y vt
 
    rm ~/miniconda.sh

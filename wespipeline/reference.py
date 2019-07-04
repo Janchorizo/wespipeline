@@ -20,13 +20,13 @@ class GetProgram(ExternalProgramTask):
     """
     
     def requires(self):
-        program_file = path.join(utils.utils.GlobalParams().base_dir, 'twoBitToFa')
+        program_file = os.path.join(utils.GlobalParams().base_dir, 'twoBitToFa')
         program_url = 'ftp://hgdownload.cse.ucsc.edu/admin/exe/linux.x86_64/twoBitToFa'
 
-        return Wget(url=program_url, output_file=program_file)
+        return utils.Wget(url=program_url, output_file=program_file)
 
     def output(self):
-        program_file = path.join(utils.utils.GlobalParams().base_dir, 'twoBitToFa')
+        program_file = os.path.join(utils.GlobalParams().base_dir, 'twoBitToFa')
         return luigi.LocalTarget(program_file)
 
     def program_args(self):
@@ -58,7 +58,7 @@ class TwoBitToFa(ExternalProgramTask):
                 'file': utils.LocalFile(file=self.reference_local_file),
             }
         else:
-            file = path.join(utils.utils.GlobalParams().base_dir, utils.utils.GlobalParams().exp_name+'.2bit')
+            file = os.path.join(utils.GlobalParams().base_dir, utils.GlobalParams().exp_name+'.2bit')
             dependencies = {
                 'program': GetProgram(), 
                 'file': utils.Wget(url=self.ref_url, output_file=file),
@@ -67,7 +67,7 @@ class TwoBitToFa(ExternalProgramTask):
         return dependencies 
 
     def output(self):
-        return luigi.LocalTarget(path.join(utils.utils.GlobalParams().base_dir,utils.utils.GlobalParams().exp_name+'.fa'))
+        return luigi.LocalTarget(os.path.join(utils.GlobalParams().base_dir,utils.GlobalParams().exp_name+'.fa'))
 
     def program_args(self):
         return [self.input()['program'].path, self.input()['file'].path, self.output().path]
@@ -101,8 +101,8 @@ class GetReferenceFa(utils.MetaOutputHandler, luigi.WrapperTask):
             if self.reference_local_file != '':
                 dependency = utils.LocalFile(self.reference_local_file)
             else:
-                out_file = luigi.LocalTarget(path.join(utils.utils.GlobalParams().base_dir, utils.utils.GlobalParams().exp_name+'.fa'))
-                dependency = Wget(url=self.ref_url, output_file=out_file)
+                out_file = luigi.LocalTarget(os.path.join(utils.GlobalParams().base_dir, utils.GlobalParams().exp_name+'.fa'))
+                dependency = utils.Wget(url=self.ref_url, output_file=out_file)
 
         return dependency
 

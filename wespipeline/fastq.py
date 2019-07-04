@@ -190,7 +190,7 @@ class GetFastq(utils.MetaOutputHandler, luigi.Task):
                 dependencies.update({'fastq1' : utils.Wget(url=self.fastq1_url, output_file=path.join(utils.GlobalParams().base_dir, 'hg19_1.fastq'))})
 
         if self.paired_end == True:
-            if self.compressed.lower() == True:
+            if self.compressed == True:
                 if self.fastq2_local_file != '':
                     dependencies.update({'fastq2' : UncompressFastqgz(
                             fastq_local_file=self.fastq2_local_file, 
@@ -200,12 +200,12 @@ class GetFastq(utils.MetaOutputHandler, luigi.Task):
                     dependencies.update({'fastq2' : UncompressFastqgz(
                             fastq_local_file=self.fastq2_local_file, 
                             fastq_url=self.fastq2_url, 
-                            output_file=path.join(utils.GlobalParams().base_dir, 'hg19_1.fastq'))})
+                            output_file=path.join(utils.GlobalParams().base_dir, 'hg19_2.fastq'))})
             else:
                 if self.fastq2_local_file != '':
                     dependencies.update({'fastq2' : utils.LocalFile(file=self.fastq2_local_file)})
                 else:
-                    dependencies.update({'fastq2' : utils.Wget(url=self.fastq2_url, output_file=path.join(utils.GlobalParams().base_dir, 'hg19_1.fastq'))})
+                    dependencies.update({'fastq2' : utils.Wget(url=self.fastq2_url, output_file=path.join(utils.GlobalParams().base_dir, 'hg19_2.fastq'))})
 
         return dependencies
 
